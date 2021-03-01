@@ -56,7 +56,8 @@ export default {
     },
     getIsAuthenticated() {
       getUserInfo().then((r) => {
-        this.isAuthenticated = (r !== null);
+        console.log(r);
+        this.isAuthenticated = (r && r.clientPrincipal);
       },
       () => {
         this.isAuthenticated = false;
