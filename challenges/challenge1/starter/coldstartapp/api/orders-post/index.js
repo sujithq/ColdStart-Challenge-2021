@@ -1,4 +1,5 @@
 const { getUser } = require('../shared/user-utils');
+const { config } = require('../shared/config');
 
 const { QueueServiceClient } = require('@azure/storage-queue')
 
@@ -12,7 +13,7 @@ module.exports = async function (context, req) {
     
     // Retrieve the connection from an environment
     // variable called AZURE_STORAGE_CONNECTION_STRING
-    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const connectionString = config.azure_storage_connectionstring;
 
     // Create a unique name for the queue
     const queueName = 'preorder';
