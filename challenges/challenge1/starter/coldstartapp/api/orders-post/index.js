@@ -1,63 +1,111 @@
 const { getUser } = require('../shared/user-utils');
 const { config } = require('../shared/config');
 
-const { QueueServiceClient } = require('@azure/storage-queue')
+// Db Stuff
+var Connection = require('tedious').Connection;
+
+// Env Vars
+const server = config.db_server;
+const userName = config.db_user;
+const password = config.db_password;
+const database = config.db_database;
 
 module.exports = async function (context, req) {
-  try {
-    context.log(req.body);
-    context.log(req.body.IcecreamId);
+  // Get the user details from the request
+  const user = getUser(req);
+  console.log(user);
+  console.log(req.body);
+  // Create order
+  // Get the pre-order from the request
+  const ret = {
+    User: user.userDetails,
+    // Date: new Date().toISOString(),
+    IcecreamId: req.body.IcecreamId,
+    Status: 'New',
+    DriverId: null,
+    FullAddress: '1 Microsoft Way, Redmond, WA 98052, USA',
+    LastPosition: null,
+  };
+  console.log(ret);
+  var cfg = {  
+    server: config.db_server,
+    authentication: {
+        type: 'default',
+        options: {
+            userName: config.db_user,
+            password: config.db_password
+        }
+    },
+    options: {
+        // If you are on Microsoft Azure, you need encryption:
+        encrypt: true,
+        database: config.db_database
+    }
+  };  
+  console.log(cfg);
 
-    // Get the user details from the request
-    const user = getUser(req);
-    
-    // Retrieve the connection from an environment
-    // variable called AZURE_STORAGE_CONNECTION_STRING
-    const connectionString = config.azure_storage_connectionstring;
+  var connection = new Connection(cfg);
 
-    // Create a unique name for the queue
-    const queueName = 'preorder';
+  // console.log(connection);
 
-    // Instantiate a QueueServiceClient which will be used
-    // to create a QueueClient and to list all the queues
-    const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
+  // var retId = null;
 
-    // Get a QueueClient which will be used
-    // to create and manipulate a queue
-    const queueClient = queueServiceClient.getQueueClient(queueName);
+  connection.on('connect', function(err) {  
+    // If no error, then good to proceed. 
+    if(!err){ 
+      console.log("connect ok");  
+      executeStatement1(context, ret);
+      console.log('After executeStatement1');
+    }else{
+      console.log("connect error");
+      context.res = {
+        status: 500,
+        body: err
+      };  
+      context.done();
+    }
+  });
+  connection.connect();
 
-    // Create the queue
-    await queueClient.createIfNotExists();
+  var Request = require('tedious').Request;
+  var TYPES = require('tedious').TYPES;
 
-    // Create order
-    // Get the pre-order from the request
-    const ret = {
-      User: user.userDetails,
-      Date: new Date().toISOString(),
-      IcecreamId: req.body.IcecreamId,
-      Status: 'New',
-      DriverId: null,
-      FullAddress: '1 Microsoft Way, Redmond, WA 98052, USA',
-      LastPosition: null,
-    };
+  function executeStatement1(context, ret) {  
+    console.log('Begin executeStatement1');
+    console.log(ret);
 
-    context.log(ret);
-    context.log(JSON.stringify(ret));
+    var request = new Request("INSERT Orders ([User], [Date], [IcecreamId], [Status], [DriverId], [FullAddress], [LastPosition]) OUTPUT INSERTED.Id VALUES (@User, CURRENT_TIMESTAMP, @IcecreamId, @Status, @DriverId, @FullAddress, @LastPosition);", function(err) {  
+      if (err) {  
+        console.log('Error!');
+        console.log(err);
+      }
+      else{
+        console.log('Ok');
+        console.log(res);
+      }
+    });
 
-    // Add a message to the queue
-    const sendMessageResponse = await queueClient.sendMessage(JSON.stringify(ret));
+    request.addParameter('User', TYPES.NVarChar, ret.User);  
+    request.addParameter('Status', TYPES.NVarChar, ret.Status);  
+    request.addParameter('IcecreamId', TYPES.Int, ret.IcecreamId);  
+    request.addParameter('FullAddress', TYPES.NVarChar, ret.FullAddress);  
+    request.addParameter('LastPosition', TYPES.NVarChar, null);  
+    request.addParameter('DriverId', TYPES.Int, null);  
 
-    // Set http response to 201
-    context.res.status(201);
+    request.on('row', function(columns) {  
+      columns.forEach(function(column) {  
+        if (column.value === null) {  
+          console.log('NULL');  
+        } else {  
+          console.log("Product id of inserted item is " + column.value);
+          context.res.body.Id = column.value;
+        }  
+      });  
+    });       
 
-    // Update order id from response
-    ret.Id = sendMessageResponse.messageId;
-
-    // Set response body
-    context.res.body = ret;
-
-  } catch (error) {
-    context.res.status(500).send(error);
+    connection.execSql(request);
   }
-
+  context.res.status = 201;
+  context.res.body = ret;
+  context.done();
 };
