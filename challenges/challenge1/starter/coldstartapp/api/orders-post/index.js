@@ -1,22 +1,23 @@
 const { getUser } = require('../shared/user-utils');
+
+var Connection = require('tedious').Connection;
+var Request = require('tedious').Request;
+var TYPES = require('tedious').TYPES;
+
 const { config } = require('../shared/config');
 
-// Db Stuff
-var Connection = require('tedious').Connection;
 
-// Env Vars
-const server = config.db_server;
-const userName = config.db_user;
-const password = config.db_password;
-const database = config.db_database;
+const server = process.env.db_server;
+const userName = process.env.db_user;
+const password = process.env.db_password;
+const database = process.env.db_database;
 
-module.exports = async function (context, req) {
+const executeSQL = (context, req) => {
   // Get the user details from the request
   const user = getUser(req);
-  console.log(user);
-  console.log(req.body);
+
   // Create order
-  // Get the pre-order from the request
+  // Get the pre-order info from the request
   const ret = {
     User: user.userDetails,
     // Date: new Date().toISOString(),
@@ -26,86 +27,82 @@ module.exports = async function (context, req) {
     FullAddress: '1 Microsoft Way, Redmond, WA 98052, USA',
     LastPosition: null,
   };
-  console.log(ret);
-  var cfg = {  
+
+  // Create Connection object
+  const connection = new Connection({
     server: config.db_server,
     authentication: {
-        type: 'default',
-        options: {
-            userName: config.db_user,
-            password: config.db_password
-        }
+      type: 'default',
+      options: {
+        userName: config.db_user,
+        password: config.db_password,
+      }
     },
     options: {
-        // If you are on Microsoft Azure, you need encryption:
-        encrypt: true,
-        database: config.db_database
-    }
-  };  
-  console.log(cfg);
-
-  var connection = new Connection(cfg);
-
-  // console.log(connection);
-
-  // var retId = null;
-
-  connection.on('connect', function(err) {  
-    // If no error, then good to proceed. 
-    if(!err){ 
-      console.log("connect ok");  
-      executeStatement1(context, ret);
-      console.log('After executeStatement1');
-    }else{
-      console.log("connect error");
-      context.res = {
-        status: 500,
-        body: err
-      };  
-      context.done();
+      database: config.db_database,
+      encrypt: true
     }
   });
-  connection.connect();
 
-  var Request = require('tedious').Request;
-  var TYPES = require('tedious').TYPES;
+  // Create the command to be executed
+  const request = new Request(`INSERT Orders ([User], [Date], [IcecreamId], [Status], [DriverId], [FullAddress], [LastPosition]) OUTPUT INSERTED.Id VALUES (@User, CURRENT_TIMESTAMP, @IcecreamId, @Status, @DriverId, @FullAddress, @LastPosition)`, (err, res) => {
+    if (err) {
+      context.log.error(err);
+      context.res.status = 500;
+      context.res.body = "Error executing T-SQL command";
+      return;
+    }
+    else {
+      ret.Id = id;
+      context.res.status = 201;
+      context.res.body = JSON.stringify(ret);
+    }
+    context.done();
+  });
 
-  function executeStatement1(context, ret) {  
-    console.log('Begin executeStatement1');
-    console.log(ret);
+  // Add Param Values
+  request.addParameter('User', TYPES.NVarChar, ret.User);
+  request.addParameter('Status', TYPES.NVarChar, ret.Status);
+  request.addParameter('IcecreamId', TYPES.Int, ret.IcecreamId);
+  request.addParameter('FullAddress', TYPES.NVarChar, ret.FullAddress);
+  request.addParameter('LastPosition', TYPES.NVarChar, null);
+  request.addParameter('DriverId', TYPES.Int, null);
 
-    var request = new Request("INSERT Orders ([User], [Date], [IcecreamId], [Status], [DriverId], [FullAddress], [LastPosition]) OUTPUT INSERTED.Id VALUES (@User, CURRENT_TIMESTAMP, @IcecreamId, @Status, @DriverId, @FullAddress, @LastPosition);", function(err) {  
-      if (err) {  
-        console.log('Error!');
-        console.log(err);
-      }
-      else{
-        console.log('Ok');
-        console.log(res);
+
+  // Handle 'connect' event
+  connection.on('connect', err => {
+    if (err) {
+      context.log.error(err);
+      context.res.status = 500;
+      context.res.body = "Error connecting to Azure SQL query";
+      context.done();
+    }
+    else {
+      connection.execSql(request);
+    }
+  });
+
+  // Result Id
+  var id = null;
+
+  // Handle 'row' event
+  request.on('row', function (columns) {
+    columns.forEach(function (column) {
+      if (column.value === null) {
+      } else {
+        id = column.value;
       }
     });
+  });
 
-    request.addParameter('User', TYPES.NVarChar, ret.User);  
-    request.addParameter('Status', TYPES.NVarChar, ret.Status);  
-    request.addParameter('IcecreamId', TYPES.Int, ret.IcecreamId);  
-    request.addParameter('FullAddress', TYPES.NVarChar, ret.FullAddress);  
-    request.addParameter('LastPosition', TYPES.NVarChar, null);  
-    request.addParameter('DriverId', TYPES.Int, null);  
+  request.on('done', function (rowCount, more, rows) {
+    return id;
+  })
 
-    request.on('row', function(columns) {  
-      columns.forEach(function(column) {  
-        if (column.value === null) {  
-          console.log('NULL');  
-        } else {  
-          console.log("Product id of inserted item is " + column.value);
-          context.res.body.Id = column.value;
-        }  
-      });  
-    });       
+  // Connect
+  connection.connect();
+}
 
-    connection.execSql(request);
-  }
-  context.res.status = 201;
-  context.res.body = ret;
-  context.done();
-};
+module.exports = function (context, req) {
+  executeSQL(context, req);
+}
