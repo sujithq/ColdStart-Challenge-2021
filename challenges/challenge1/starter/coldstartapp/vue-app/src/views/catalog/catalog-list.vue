@@ -8,6 +8,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    recommandation: {
+      type: Object,
+      default: () => {},
+    },
     errorMessage: {
       type: String,
       default: () => '',
@@ -22,7 +26,7 @@ export default {
 <template>
   <div>
     <div v-if="errorMessage">{{ errorMessage }}</div>
-    <div v-if="!icecreams.length && !errorMessage">
+    <div v-if="(!icecreams.length || recommandation) && !errorMessage">
       Loading data ...
     </div>
     <div class="container">

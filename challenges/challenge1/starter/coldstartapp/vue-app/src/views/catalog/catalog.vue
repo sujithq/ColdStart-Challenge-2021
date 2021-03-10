@@ -18,17 +18,31 @@ export default {
     CatalogList,
   },
   async created() {
+    console.log('created');
     await this.getCatalog();
+    console.log('getCatalog');
+    await this.getRecommandation();
+    console.log('getRecommandation');
   },
   computed: {
     ...mapGetters('catalog', { catalog: 'catalog' }),
+    ...mapGetters('recommandation', { recommandation: 'recommandation' }),
   },
   methods: {
     ...mapActions('catalog', ['getCatalogAction']),
+    ...mapActions('recommandation', ['getRecommandationAction']),
     async getCatalog() {
       this.errorMessage = undefined;
       try {
         await this.getCatalogAction();
+      } catch (error) {
+        this.errorMessage = 'Unauthorized';
+      }
+    },
+    async getRecommandation() {
+      this.errorMessage = undefined;
+      try {
+        await this.getRecommandationAction();
       } catch (error) {
         this.errorMessage = 'Unauthorized';
       }
@@ -45,6 +59,7 @@ export default {
       <div class="column" v-if="catalog">
         <CatalogList
           :icecreams="catalog"
+          :recommandation="recommandation"
           :errorMessage="errorMessage"
         ></CatalogList>
       </div>
