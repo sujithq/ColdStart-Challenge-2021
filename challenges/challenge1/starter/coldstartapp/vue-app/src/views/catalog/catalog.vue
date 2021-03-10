@@ -18,19 +18,19 @@ export default {
     CatalogList,
   },
   async created() {
-    console.log('created');
+    // console.log('created');
     await this.getCatalog();
-    console.log('getCatalog');
-    await this.getRecommandation();
-    console.log('getRecommandation');
+    // console.log('getCatalog');
+    // await this.getRecommandation();
+    // console.log('getRecommandation');
   },
   computed: {
     ...mapGetters('catalog', { catalog: 'catalog' }),
-    ...mapGetters('recommandation', { recommandation: 'recommandation' }),
+    ...mapGetters('catalog', { recommandation: 'recommandation' }),
   },
   methods: {
     ...mapActions('catalog', ['getCatalogAction']),
-    ...mapActions('recommandation', ['getRecommandationAction']),
+    // ...mapActions('recommandation', ['getRecommandationAction']),
     async getCatalog() {
       this.errorMessage = undefined;
       try {
@@ -39,14 +39,14 @@ export default {
         this.errorMessage = 'Unauthorized';
       }
     },
-    async getRecommandation() {
-      this.errorMessage = undefined;
-      try {
-        await this.getRecommandationAction();
-      } catch (error) {
-        this.errorMessage = 'Unauthorized';
-      }
-    },
+    // async getRecommandation() {
+    //   this.errorMessage = undefined;
+    //   try {
+    //     await this.getRecommandationAction();
+    //   } catch (error) {
+    //     this.errorMessage = 'Unauthorized';
+    //   }
+    // },
   },
 };
 </script>

@@ -13,8 +13,11 @@ const password = process.env.db_password;
 const database = process.env.db_database;
 
 const executeSQL = (context, req) => {
+  // console.log('Step 1');
   // Get the user details from the request
   const user = getUser(req);
+
+  console.log(req.body);
 
   // Create order
   // Get the pre-order info from the request

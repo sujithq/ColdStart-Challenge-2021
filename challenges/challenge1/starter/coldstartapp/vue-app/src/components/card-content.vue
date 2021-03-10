@@ -10,8 +10,8 @@ export default {
   },
   props: {
     id: {
-      type: String,
-      default: () => '',
+      type: Number,
+      default: () => -1,
     },
     name: {
       type: String,
@@ -24,6 +24,14 @@ export default {
     imageurl: {
       type: String,
       default: () => '',
+    },
+    eventId: {
+      type: String,
+      default: () => null,
+    },
+    reward: {
+      type: Number,
+      default: () => 0,
     },
   },
   data() {
@@ -39,29 +47,41 @@ export default {
   },
   methods: {
     ...mapActions('order', ['postOrderAction']),
+    ...mapActions('reward', ['postRewardAction']),
     async clicked(item) {
-      if (item) {
+      console.log(item);
+      console.log(item.id);
+      console.log(item.eventId);
+      console.log(item.reward);
+      if (item.id) {
         const ret = {
-          IcecreamId: item,
+          IcecreamId: item.id,
         };
         try {
           await this.postOrderAction(ret);
-          return true;
         } catch (error) {
           console.error(error);
           return false;
         }
       }
-      return false;
+      try {
+        console.log(`Send Reward ${item.reward}`);
+        await this.postRewardAction({ EventId: item.eventId, Reward: item.reward });
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+      return true;
     },
     getIsAuthenticated() {
-      getUserInfo().then((r) => {
-        // console.log(r);
-        this.isAuthenticated = Boolean(r && r.identityProvider);
-      },
-      () => {
-        this.isAuthenticated = false;
-      });
+      getUserInfo().then(
+        (r) => {
+          this.isAuthenticated = Boolean(r && r.identityProvider);
+        },
+        () => {
+          this.isAuthenticated = false;
+        },
+      );
     },
   },
 };
@@ -78,12 +98,13 @@ export default {
         <img v-bind:src="imageurl" />
       </div>
       <p class="description">{{ description }}</p>
-      <ButtonFooter @clicked="clicked"
-            :item="this.id"
-            label="Add To Cart"
-            class="primary"
-            v-if="isAuthenticated === true"
-          />
+      <ButtonFooter
+        @clicked="clicked"
+        :item="{ id: this.id, eventId: this.eventId, reward: this.reward }"
+        label="Add To Cart"
+        class="primary"
+        v-if="isAuthenticated === true"
+      />
     </div>
   </div>
 </template>

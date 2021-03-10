@@ -10,7 +10,7 @@ const userName = process.env.db_user;
 const password = process.env.db_password;
 const database = process.env.db_database;
 
-const executeSQL = (context) => {
+const getCatalog = (context) => {
   // Create Connection object
   const connection = new Connection({
     server: config.db_server,
@@ -84,5 +84,5 @@ const executeSQL = (context) => {
 }
 
 module.exports = function (context) {
-  executeSQL(context);
+  getCatalog(context);
 }

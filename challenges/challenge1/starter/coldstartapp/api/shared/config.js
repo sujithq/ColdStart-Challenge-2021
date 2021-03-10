@@ -7,7 +7,8 @@ const config = {
   db_password: process.env.db_password,
   db_server: process.env.db_server,
   db_database: process.env.db_database,
-  personalizer_key: process.env.personalizer_key 
+  personalizer_key: process.env.personalizer_key,
+  personalizer_base: process.env.personalizer_base 
 };
 
 module.exports = { config };

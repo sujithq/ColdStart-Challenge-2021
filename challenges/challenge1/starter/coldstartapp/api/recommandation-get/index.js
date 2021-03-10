@@ -1,8 +1,10 @@
-const { getAuthenticationStatus, getUser } = require('../shared/user-utils');
+const { getAuthenticationStatus } = require('../shared/user-utils');
+
+// const { getCatalog } = require('../shared/catalog-data');
 
 const { config } = require('../shared/config');
 
-const { v1: uuidv1, stringify } = require('uuid');
+const { v1: uuidv1 } = require('uuid');
 const Personalizer = require('@azure/cognitiveservices-personalizer');
 const CognitiveServicesCredentials = require('@azure/ms-rest-azure-js').CognitiveServicesCredentials;
 
@@ -10,7 +12,7 @@ const serviceKey = config.personalizer_key;
 
 // The endpoint specific to your personalization service instance; 
 // e.g. https://<your-resource-name>.cognitiveservices.azure.com
-const baseUri = "https://sujithq-coldstart-challenge-2021.cognitiveservices.azure.com/";
+const baseUri = config.personalizer_base;
 
 const credentials = new CognitiveServicesCredentials(serviceKey);
 
@@ -22,34 +24,13 @@ function getContextFeaturesList(req) {
   const dayOfWeekFeatures = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
   const timeOfDayFeatures = ['morning', 'afternoon', 'evening', 'night'];
 
-  const { detect } = require('detect-browser');
   let authenticationStatus = getAuthenticationStatus(req);
-  console.log(authenticationStatus);
-  const d = detect();
-  if (d) {
-    console.log(d);
-    console.log(d.name);
-    console.log(d.version);
-    console.log(d.os);
-  }
 
   const browser = require('browser-detect');
-  const b = browser(req.headers['user-agent']);
 
-  if (b) {
-    console.log(b);
-    console.log(b.name);
-    console.log(b.version);
-    console.log(b.versionNumber);
-    console.log(b.mobile);
-    console.log(b.os);
-  }
-  console.log(req);
   let date = new Date();
   let dow = date.getDay();
-  console.log(dow);
   let tod = date.getHours();
-  console.log(tod);
   let t = timeOfDayFeatures[0];
 
   if (tod > 6 && tod <= 12) {
@@ -61,6 +42,8 @@ function getContextFeaturesList(req) {
   } else {
     t = timeOfDayFeatures[3];
   }
+
+  const b = browser(req.headers['user-agent']);
 
   return [
     {
@@ -78,7 +61,10 @@ function getContextFeaturesList(req) {
   ];
 }
 
-function getActionsList() {
+function getActionsList(context) {
+  // const c = getCatalog(context);
+  // console.log(c);
+
   return [
     {
       "id": "1",
@@ -195,7 +181,7 @@ module.exports = async function (context, req) {
   rankRequest.contextFeatures = getContextFeaturesList(req);
 
   // Get the actions list to choose from personalization with their features.
-  rankRequest.actions = getActionsList();
+  rankRequest.actions = getActionsList(context);
 
   // Exclude an action for personalization ranking. This action will be held at its current position.
   //rankRequest.excludedActions = getExcludedActionsList();
