@@ -1,6 +1,5 @@
 const { getAuthenticationStatus } = require('../shared/user-utils');
-
-// const { getCatalog } = require('../shared/catalog-data');
+const data = require('../shared/catalog-data');
 
 const { config } = require('../shared/config');
 
@@ -61,118 +60,28 @@ function getContextFeaturesList(req) {
   ];
 }
 
-function getActionsList(context) {
-  // const c = getCatalog(context);
-  // console.log(c);
+async function getActionsList() {
+  const items = await data.getCatalog();
+  const result = [];
 
-  return [
-    {
-      "id": "1",
-      "features": [
+  items.forEach(function (item) {
+    result.push({
+      id: item.Id.toString(),
+      features: [
         {
-          "Name": "Color Pop",
-          "Description": "Delicious 4-color popsicle, plenty of vitamins.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream1.png"
+          Name: item.Name,
+          Description: item.Description,
+          ImageUrl: item.ImageUrl
         }
       ]
-    },
-    {
-      "id": "2",
-      "features": [
-        {
-          "Name": "Lemoncella",
-          "Description": "Refreshing lemon-flavoured icecream bar.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream2.png"
-        }
-      ]
-    },
-    {
-      "id": "3",
-      "features": [
-        {
-          "Name": "Pink Panther",
-          "Description": "Fruity ice cream bar with hints of strawberry and lime.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream3.png"
-        }
-      ]
-    },
-    {
-      "id": "4",
-      "features": [
-        {
-          "Name": "Choco Chique",
-          "Description": "Filled with praline and covered with the finest Belgian chocolate.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream4.png"
-        }
-      ]
-    },
-    {
-      "id": "5",
-      "features": [
-        {
-          "Name": "Blue Lagoon",
-          "Description": "Blueberry and melon ice cream bar.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream5.png"
-        }
-      ]
-    },
-    {
-      "id": "6",
-      "features": [
-        {
-          "Name": "Purple Rain",
-          "Description": "Indulging strawberry and vodka icecream bar.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream6.png"
-        }
-      ]
-    },
-    {
-      "id": "7",
-      "features": [
-        {
-          "Name": "Sorbonne",
-          "Description": "Strawberry and raspberry sorbet.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream7.png"
-        }
-      ]
-    },
-    {
-      "id": "8",
-      "features": [
-        {
-          "Name": "Sandstorm",
-          "Description": "Chocolate and vanille ice cream cookie (3).",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream8.png"
-        }
-      ]
-    },
-    {
-      "id": "9",
-      "features": [
-        {
-          "Name": "Maxi jazz",
-          "Description": "Dame Blanche flavoured ice cream cake (6p).",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream9.png"
-        }
-      ]
-    },
-    {
-      "id": "10",
-      "features": [
-        {
-          "Name": "Triplets",
-          "Description": "Surprise yourself with a random selection of 3 different flavors.",
-          "ImageUrl": "https://coldstartsa.blob.core.windows.net/web/assets/Icecream10.png"
-        }
-      ]
-    }
-  ];
+    })
+  });
+  return result;
 }
-
 
 module.exports = async function (context, req) {
 
-  let rankRequest = {}
+  const rankRequest = {}
 
   // Generate an ID to associate with the request.
   rankRequest.eventId = uuidv1();
@@ -181,18 +90,17 @@ module.exports = async function (context, req) {
   rankRequest.contextFeatures = getContextFeaturesList(req);
 
   // Get the actions list to choose from personalization with their features.
-  rankRequest.actions = getActionsList(context);
+  rankRequest.actions = await getActionsList();
 
   // Exclude an action for personalization ranking. This action will be held at its current position.
   //rankRequest.excludedActions = getExcludedActionsList();
 
   rankRequest.deferActivation = false;
 
+  console.log(rankRequest);
+
   // Rank the actions
   const rankResponse = await personalizerClient.rank(rankRequest);
 
-  console.log(rankResponse);
-
-  context.res.body = JSON.stringify(rankResponse);
-  context.done();
+  context.res.status(200).send(rankResponse);
 }

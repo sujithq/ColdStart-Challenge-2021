@@ -1,8 +1,8 @@
 const { getUser } = require('../shared/user-utils');
 
-var Connection = require('tedious').Connection;
-var Request = require('tedious').Request;
-var TYPES = require('tedious').TYPES;
+const Connection = require('tedious').Connection;
+const Request = require('tedious').Request;
+const TYPES = require('tedious').TYPES;
 
 const { config } = require('../shared/config');
 
@@ -86,7 +86,7 @@ const executeSQL = (context, req) => {
   });
 
   // Result Id
-  var id = null;
+  const id = null;
 
   // Handle 'row' event
   request.on('row', function (columns) {
