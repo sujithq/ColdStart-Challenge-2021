@@ -25,14 +25,22 @@ export default {
       try {
         const response = await axios.get(`${API}/catalog`);
         const catalog = parseList(response);
-        commit(GET_CATALOG, catalog);
 
         const responseR = await axios.get(`${API}/recommendation`);
         const recommendation = parseItem(responseR, 200);
         const icecreamId = parseInt(recommendation.rewardActionId, 10);
         const result = catalog.filter((obj) => obj.Id === icecreamId)[0];
+
+        // remove recommended
+        const index = catalog.indexOf(result);
+        if (index > -1) {
+          catalog.splice(index, 1);
+        }
+
         result.EventId = recommendation.eventId;
+
         commit(GET_RECOMMENDATION, result);
+        commit(GET_CATALOG, catalog);
       } catch (error) {
         captains.error(error);
         throw new Error(error);
