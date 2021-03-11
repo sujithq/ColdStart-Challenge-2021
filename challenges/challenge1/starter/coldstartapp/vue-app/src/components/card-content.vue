@@ -2,6 +2,7 @@
 import ButtonFooter from '@/components/button-footer.vue';
 import { mapActions, mapGetters } from 'vuex';
 import getUserInfo from '@/assets/js/userInfo';
+import x from 'vue-simple-alert';
 
 export default {
   name: 'CardContent',
@@ -49,24 +50,28 @@ export default {
     ...mapActions('order', ['postOrderAction']),
     ...mapActions('reward', ['postRewardAction']),
     async clicked(item) {
-      console.log(item);
-      console.log(item.id);
-      console.log(item.eventId);
-      console.log(item.reward);
       if (item.id) {
-        const ret = {
-          IcecreamId: item.id,
-        };
-        try {
-          await this.postOrderAction(ret);
-        } catch (error) {
-          console.error(error);
-          return false;
-        }
+        const ShippingAddress = '1 Microsoft Way, Redmond, WA 98052, USA';
+        // prompt(message, defaultText, title, type, reverseButton)
+        x.prompt('Input your shipping address', ShippingAddress).then(async (text) => {
+          const ret = {
+            IcecreamId: item.id,
+            ShippingAddress: text,
+          };
+
+          try {
+            await this.postOrderAction(ret);
+          } catch (error) {
+            console.error(error);
+            return false;
+          }
+        });
       }
       try {
-        console.log(`Send Reward ${item.reward}`);
-        await this.postRewardAction({ EventId: item.eventId, Reward: item.reward });
+        await this.postRewardAction({
+          EventId: item.eventId,
+          Reward: item.reward,
+        });
       } catch (error) {
         console.error(error);
         return false;

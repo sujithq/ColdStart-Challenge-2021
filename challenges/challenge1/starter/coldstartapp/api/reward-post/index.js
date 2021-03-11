@@ -16,7 +16,6 @@ const personalizerClient = new Personalizer.PersonalizerClient(credentials, base
 
 
 module.exports = async function (context, req) {
-  console.log(req.body);
   const eventId = req.body.EventId;
   const rewardRequest = {
     value: req.body.Reward

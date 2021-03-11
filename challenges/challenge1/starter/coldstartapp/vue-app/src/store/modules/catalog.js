@@ -31,7 +31,6 @@ export default {
         const recommandation = parseItem(responseR, 200);
         const icecreamId = parseInt(recommandation.rewardActionId, 10);
         const result = catalog.filter((obj) => obj.Id === icecreamId)[0];
-        console.log(result);
         result.EventId = recommandation.eventId;
         commit(GET_RECOMMANDATION, result);
       } catch (error) {

@@ -18,11 +18,7 @@ export default {
     CatalogList,
   },
   async created() {
-    // console.log('created');
     await this.getCatalog();
-    // console.log('getCatalog');
-    // await this.getRecommandation();
-    // console.log('getRecommandation');
   },
   computed: {
     ...mapGetters('catalog', { catalog: 'catalog' }),
@@ -30,7 +26,6 @@ export default {
   },
   methods: {
     ...mapActions('catalog', ['getCatalogAction']),
-    // ...mapActions('recommandation', ['getRecommandationAction']),
     async getCatalog() {
       this.errorMessage = undefined;
       try {
