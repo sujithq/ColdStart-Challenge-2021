@@ -11,6 +11,7 @@ export default {
       message: '',
       routePath: '/catalog',
       title: 'Our Ice Creams',
+      titleR: 'Recommendation',
     };
   },
   components: {
@@ -22,7 +23,7 @@ export default {
   },
   computed: {
     ...mapGetters('catalog', { catalog: 'catalog' }),
-    ...mapGetters('catalog', { recommandation: 'recommandation' }),
+    ...mapGetters('catalog', { recommendation: 'recommendation' }),
   },
   methods: {
     ...mapActions('catalog', ['getCatalogAction']),
@@ -34,28 +35,33 @@ export default {
         this.errorMessage = 'Unauthorized';
       }
     },
-    // async getRecommandation() {
-    //   this.errorMessage = undefined;
-    //   try {
-    //     await this.getRecommandationAction();
-    //   } catch (error) {
-    //     this.errorMessage = 'Unauthorized';
-    //   }
-    // },
   },
 };
 </script>
 
 <template>
   <div class="content-container">
+    <ListHeader :title="titleR" @refresh="getCatalog" :routePath="routePath">
+    </ListHeader>
+    <div class="columns is-multiline is-variable">
+      <div class="column" v-if="recommendation">
+        <CatalogList
+          :icecreams="[recommendation]"
+          :errorMessage="errorMessage"
+          :reward="1"
+          :eventId="recommendation.EventId"
+        ></CatalogList>
+      </div>
+    </div>
     <ListHeader :title="title" @refresh="getCatalog" :routePath="routePath">
     </ListHeader>
     <div class="columns is-multiline is-variable">
       <div class="column" v-if="catalog">
         <CatalogList
           :icecreams="catalog"
-          :recommandation="recommandation"
           :errorMessage="errorMessage"
+          :reward="0"
+          :eventId="recommendation.EventId"
         ></CatalogList>
       </div>
     </div>
