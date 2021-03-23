@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using RestSharp;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
 namespace Company.Function
 {
     public static class QueueTriggerCSharp1
@@ -16,24 +18,19 @@ namespace Company.Function
         public static OrderDB Run([QueueTrigger("preorder", Connection = "sujithqcschallenge2021_STORAGE")] string myQueueItem,
                 FunctionContext context)
         {
-            var logger = context.GetLogger("QueueTriggerCSharp1");
-
-            logger.LogInformation($"C# Queue trigger function processing: {myQueueItem}");
-
-            logger.LogInformation($"C# Queue trigger function Deserialize: {myQueueItem}");
-
             var orderIn = JsonConvert.DeserializeObject<Order>(myQueueItem);
 
-            logger.LogInformation($"C# Queue trigger function Composing: {myQueueItem}");
-
-            // Get Icream Info
+            // Get Icecream Info
             var client = new RestClient(Environment.GetEnvironmentVariable("ApiBase"));
-            var request = new RestRequest("catalog/{id}")
-              .AddUrlSegment("id", orderIn.IcecreamId);
+            client.UseJson();
+
+            var request = new RestRequest($"{Environment.GetEnvironmentVariable("ApiBase")}/catalog/{orderIn.IcecreamId}");
 
             var lst = client.Get<List<Catalog>>(request);
 
-            var icecream = lst.Data.First();
+            var icecreams = JsonConvert.DeserializeObject<List<Catalog>>(lst.Content);
+
+            var icecream = icecreams.First();
 
             var document = new OrderDB
             {
@@ -58,8 +55,6 @@ namespace Company.Function
                 DeliveryPosition = null,
                 LastPosition = null
             };
-            logger.LogInformation($"C# Queue trigger function Processed: {document}");
-
             return document;
         }
     }
