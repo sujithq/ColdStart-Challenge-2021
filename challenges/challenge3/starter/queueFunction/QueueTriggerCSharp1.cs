@@ -2,7 +2,9 @@ using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-
+using RestSharp;
+using System.Collections.Generic;
+using System.Linq;
 namespace Company.Function
 {
     public static class QueueTriggerCSharp1
@@ -24,6 +26,15 @@ namespace Company.Function
 
             logger.LogInformation($"C# Queue trigger function Composing: {myQueueItem}");
 
+            // Get Icream Info
+            var client = new RestClient("https://orange-pond-098072a03.azurestaticapps.net/api");
+            var request = new RestRequest("catalog/{id}")
+              .AddUrlSegment("id", orderIn.IcecreamId);
+
+            var lst = client.Get<List<Catalog>>(request);
+
+            var icecream = lst.Data.First();
+
             var document = new OrderDB
             {
                 Id = orderIn.Id,
@@ -32,9 +43,9 @@ namespace Company.Function
                 Icecream = new Icream()
                 {
                     IcecreamId = orderIn.IcecreamId,
-                    Name = null,
-                    Description = null,
-                    ImageUrl = null
+                    Name = icecream.Name,
+                    Description = icecream.Description,
+                    ImageUrl = icecream.ImageUrl
                 },
                 Status = "Accepted",
                 Driver = new Driver()
@@ -108,5 +119,13 @@ namespace Company.Function
         public string DriverId { get; set; }
         public string FullAddress { get; set; }
         public string LastPosition { get; set; }
+    }
+
+    public class Catalog{
+      public int Id { get; set; }
+      public string Name { get; set; }
+      public string Description { get; set; }
+      public string ImageUrl { get; set; }
+    
     }
 }
