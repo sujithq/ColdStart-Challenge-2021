@@ -23,4 +23,12 @@ postOrder = async function (order) {
   return await insertSQL(query, params);
 }
 
-module.exports = { getCatalog, postOrder };
+getCatalogById = async function (id) {
+  const query = `SELECT Id, Name, Description, ImageUrl FROM Icecreams WHERE Id = @id`;
+  const params = [];
+  // Add Param Values
+  params.push({ Name: 'Id', Type: TYPES.NVarChar, Value: id });
+  return await executeSQL(query, params);
+}
+
+module.exports = { getCatalog, postOrder, getCatalogById };

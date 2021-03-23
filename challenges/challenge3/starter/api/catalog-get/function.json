@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "catalog"
+      "route": "catalog/{id:int?}"
     },
     {
       "type": "http",
