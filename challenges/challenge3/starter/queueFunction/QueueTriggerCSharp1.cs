@@ -6,6 +6,7 @@ using RestSharp;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 
 namespace Company.Function
 {
@@ -57,6 +58,52 @@ namespace Company.Function
             };
             return document;
         }
+
+        [Function("TimerTriggerCSharp")]
+        public static void RunTimer([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, FunctionContext context)
+        {
+            var logger = context.GetLogger("TimerTriggerCSharp");
+            if (myTimer.IsPastDue)
+            {
+                logger.LogInformation("Timer is running late!");
+            }
+            logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+        }
+    }
+
+    public class TimerInfo
+    {
+        /// <summary>
+        /// Gets the current schedule status for this timer.
+        /// If schedule monitoring is not enabled for this timer (see <see cref="TimerTriggerAttribute.UseMonitor"/>)
+        /// this property will return null.
+        /// </summary>
+        public ScheduleStatus? ScheduleStatus { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this timer invocation
+        /// is due to a missed schedule occurrence.
+        /// </summary>
+        public bool IsPastDue { get; set; }
+    }
+
+    public class ScheduleStatus
+    {
+        /// <summary>
+        /// Gets or sets the last recorded schedule occurrence.
+        /// </summary>
+        public DateTime Last { get; set; }
+
+        /// <summary>
+        /// Gets or sets the expected next schedule occurrence.
+        /// </summary>
+        public DateTime Next { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last time this record was updated. This is used to re-calculate Next
+        /// with the current Schedule after a host restart.
+        /// </summary>
+        public DateTime LastUpdated { get; set; }
     }
 
     public class Driver
