@@ -27,7 +27,7 @@ namespace Company.Function
             logger.LogInformation($"C# Queue trigger function Composing: {myQueueItem}");
 
             // Get Icream Info
-            var client = new RestClient("https://orange-pond-098072a03.azurestaticapps.net/api");
+            var client = new RestClient(Environment.GetEnvironmentVariable("ApiBase"));
             var request = new RestRequest("catalog/{id}")
               .AddUrlSegment("id", orderIn.IcecreamId);
 
