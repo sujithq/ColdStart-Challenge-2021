@@ -7,11 +7,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
+using Microsoft.Azure.Cosmos;
+using System.IO;
+using System.Text;
+using Newtonsoft.Json.Serialization;
 
 namespace Company.Function
 {
     public static class QueueTriggerCSharp1
     {
+
+        private static readonly JsonSerializer Serializer = new JsonSerializer();
+
         [Function("QueueTriggerCSharp1")]
         [CosmosDBOutput(databaseName: "coldstartchallenge2021",
                     collectionName: "orders",
@@ -35,37 +42,87 @@ namespace Company.Function
 
             var document = new OrderDB
             {
-                Id = orderIn.Id,
-                User = orderIn.User,
-                Date = orderIn.Date,
-                Icecream = new Icream()
+                id = orderIn.Id,
+                user = orderIn.User,
+                date = orderIn.Date,
+                icecream = new Icream()
                 {
-                    IcecreamId = orderIn.IcecreamId,
-                    Name = icecream.Name,
-                    Description = icecream.Description,
-                    ImageUrl = icecream.ImageUrl
+                    icecreamId = orderIn.IcecreamId,
+                    name = icecream.Name,
+                    description = icecream.Description,
+                    imageUrl = icecream.ImageUrl
                 },
-                Status = "Accepted",
-                Driver = new Driver()
+                status = "Accepted",
+                driver = new Driver()
                 {
-                    DriverId = Guid.Empty,
-                    Name = null,
-                    ImageUrl = null
+                    driverId = null,
+                    name = null,
+                    imageUrl = null
                 },
-                FullAddress = orderIn.FullAddress,
-                DeliveryPosition = null,
-                LastPosition = null
+                fullAddress = orderIn.FullAddress,
+                deliveryPosition = null,
+                lastPosition = null
             };
             return document;
         }
 
         [Function("TimerTriggerCSharp")]
-        public static void RunTimer([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, FunctionContext context)
+        public static async Task RunTimer([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, FunctionContext context)
         {
             var logger = context.GetLogger("TimerTriggerCSharp");
             if (myTimer.IsPastDue)
             {
                 logger.LogInformation("Timer is running late!");
+            }
+
+            using (CosmosClient cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDBep"), Environment.GetEnvironmentVariable("CosmosDBkey")))
+            {
+                Container container = cosmosClient.GetContainer(Environment.GetEnvironmentVariable("CosmosDBdatabaseName"), Environment.GetEnvironmentVariable("CosmosDBcollectionName"));
+
+                QueryDefinition query = new QueryDefinition(
+                                "select * from orders s where s.status = @StatusInput ")
+                                .WithParameter("@StatusInput", "Accepted");
+
+                List<OrderDB> allAcceptedOrders = new List<OrderDB>();
+                using (FeedIterator<OrderDB> resultSet = container.GetItemQueryIterator<OrderDB>(
+                    query,
+                    requestOptions: new QueryRequestOptions()
+                    {
+                        MaxItemCount = 1
+                    }))
+                {
+                    while (resultSet.HasMoreResults)
+                    {
+                        FeedResponse<OrderDB> response = await resultSet.ReadNextAsync();
+                        //if (response.Any())
+                        //{
+                        //    OrderDB order = response.First();
+                        //    Console.WriteLine($"Order Status: {order.status}; Id: {order.id};");
+                        //}
+                        if (response.Diagnostics != null)
+                        {
+                            Console.WriteLine($" Diagnostics {response.Diagnostics.ToString()}");
+                        }
+                        allAcceptedOrders.AddRange(response);
+                    }
+                }
+
+                foreach (var order in allAcceptedOrders)
+                {
+                    Console.WriteLine($"Order Status: {order.status}; Id: {order.id}; User: {order.user};");
+                    order.status = "Ready";
+                    Console.WriteLine($"New Order Status: {order.status}; Id: {order.id}; User: {order.user};");
+
+                    ItemResponse<OrderDB> response = await container.ReplaceItemAsync(
+                        partitionKey: new PartitionKey(order.user),
+                        id: order.id,
+                        item: order);
+
+                    if (response.Diagnostics != null)
+                    {
+                        Console.WriteLine($" Diagnostics {response.Diagnostics.ToString()}");
+                    }
+                }
             }
             logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
         }
@@ -108,52 +165,36 @@ namespace Company.Function
 
     public class Driver
     {
-        [JsonProperty(PropertyName = "driverId")]
-        public Guid DriverId { get; set; }
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
-        [JsonProperty(PropertyName = "imageUrl")]
-        public string ImageUrl { get; set; }
+        public string driverId { get; set; }
+        public string name { get; set; }
+        public string imageUrl { get; set; }
     }
 
     public class Icream
     {
-        [JsonProperty(PropertyName = "icecreamId")]
-        public int IcecreamId { get; set; }
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
-        [JsonProperty(PropertyName = "description")]
-        public string Description { get; set; }
-        [JsonProperty(PropertyName = "imageUrl")]
-        public string ImageUrl { get; set; }
+        public int icecreamId { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public string imageUrl { get; set; }
     }
 
     public class OrderDB
     {
-        [JsonProperty(PropertyName = "id")]
-        public Guid Id { get; set; }
-        [JsonProperty(PropertyName = "user")]
-        public string User { get; set; }
-        [JsonProperty(PropertyName = "date")]
-        public DateTime Date { get; set; }
-        [JsonProperty(PropertyName = "icecream")]
-        public Icream Icecream { get; set; }
-        [JsonProperty(PropertyName = "status")]
-        public string Status { get; set; }
-        [JsonProperty(PropertyName = "driver")]
-        public Driver Driver { get; set; }
-        [JsonProperty(PropertyName = "fullAddress")]
-        public string FullAddress { get; set; }
-        [JsonProperty(PropertyName = "deliveryPosition")]
-        public string DeliveryPosition { get; set; }
-        [JsonProperty(PropertyName = "lastPosition")]
-        public string LastPosition { get; set; }
+        public string id { get; set; }
+        public string user { get; set; }
+        public DateTime date { get; set; }
+        public Icream icecream { get; set; }
+        public string status { get; set; }
+        public Driver driver { get; set; }
+        public string fullAddress { get; set; }
+        public string deliveryPosition { get; set; }
+        public string lastPosition { get; set; }
 
     }
 
     public class Order
     {
-        public Guid Id { get; set; }
+        public string Id { get; set; }
         public DateTime Date { get; set; }
         public string User { get; set; }
         public int IcecreamId { get; set; }
@@ -163,11 +204,12 @@ namespace Company.Function
         public string LastPosition { get; set; }
     }
 
-    public class Catalog{
-      public int Id { get; set; }
-      public string Name { get; set; }
-      public string Description { get; set; }
-      public string ImageUrl { get; set; }
-    
+    public class Catalog
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+
     }
 }
