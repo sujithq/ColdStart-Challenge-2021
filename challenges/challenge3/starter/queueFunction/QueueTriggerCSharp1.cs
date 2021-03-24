@@ -11,6 +11,9 @@ using Microsoft.Azure.Cosmos;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json.Serialization;
+using Microsoft.Azure.Cosmos.Spatial;
+using BingMapsRESTToolkit;
+using Point = Microsoft.Azure.Cosmos.Spatial.Point;
 
 namespace Company.Function
 {
@@ -111,12 +114,15 @@ namespace Company.Function
                 {
                     Console.WriteLine($"Order Status: {order.status}; Id: {order.id}; User: {order.user};");
                     order.status = "Ready";
-                    Console.WriteLine($"New Order Status: {order.status}; Id: {order.id}; User: {order.user};");
+
+                    order.deliveryPosition = await GetLocation(order.fullAddress);
 
                     ItemResponse<OrderDB> response = await container.ReplaceItemAsync(
                         partitionKey: new PartitionKey(order.user),
                         id: order.id,
                         item: order);
+
+                    Console.WriteLine($"New Order Status: {order.status}; Id: {order.id}; User: {order.user};");
 
                     if (response.Diagnostics != null)
                     {
@@ -125,6 +131,42 @@ namespace Company.Function
                 }
             }
             logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+        }
+
+        static async Task<Point> GetLocation(string address)
+        {
+            //Create a request.
+            var request = new GeocodeRequest()
+            {
+                Query = address,
+                IncludeIso2 = true,
+                IncludeNeighborhood = true,
+                MaxResults = 25,
+                BingMapsKey = Environment.GetEnvironmentVariable("BingMapsKey")
+            };
+
+            //Process the request by using the ServiceManager.
+            var response = await request.Execute();
+
+            if (response != null &&
+                response.ResourceSets != null &&
+                response.ResourceSets.Length > 0 &&
+                response.ResourceSets[0].Resources != null &&
+                response.ResourceSets[0].Resources.Length > 0)
+            {
+                var result = response.ResourceSets[0].Resources[0] as BingMapsRESTToolkit.Location;
+
+                return new Point(result.Point.Coordinates[0], result.Point.Coordinates[1]);
+            }
+
+            return new Point(NextDoubleLinear(-180, 180), NextDoubleLinear(-180, 180));
+        }
+
+        public static double NextDoubleLinear(double minValue, double maxValue)
+        {
+            Random random = new Random();
+            double sample = random.NextDouble();
+            return (maxValue * sample) + (minValue * (1d - sample));
         }
     }
 
@@ -187,8 +229,8 @@ namespace Company.Function
         public string status { get; set; }
         public Driver driver { get; set; }
         public string fullAddress { get; set; }
-        public string deliveryPosition { get; set; }
-        public string lastPosition { get; set; }
+        public Point deliveryPosition { get; set; }
+        public Point lastPosition { get; set; }
 
     }
 

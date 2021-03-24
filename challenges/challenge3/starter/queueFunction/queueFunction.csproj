@@ -9,6 +9,7 @@
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
   </PropertyGroup>
   <ItemGroup>
+  <PackageReference Include="BingMapsRESTToolkit" Version="1.1.4" />
 		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.17.1" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="4.0.4" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.0.1" />
