@@ -3,7 +3,7 @@ const Request = require('tedious').Request
 const { config } = require('./config');
 
 const executeSQL = (sql, params) => new Promise((resolve, reject) => {
-  const result = [];
+  var result = [];
 
   const connection = new Connection({
     server: config.db_server,

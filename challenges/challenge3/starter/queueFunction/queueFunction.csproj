@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
+    <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+  <ItemGroup>
+  <PackageReference Include="BingMapsRESTToolkit" Version="1.1.4" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.17.1" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="4.0.4" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.0.1" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.0.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.0.1" OutputItemType="Analyzer" />
+		<!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk.Analyzers" Version="1.0.0" /> -->
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.CosmosDB" Version="3.0.9" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="RestSharp" Version="106.11.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="local.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <Target Name="CopyRuntimes" AfterTargets="AfterBuild" Condition=" '$(OS)' == 'UNIX' ">
+    <!-- To workaround a bug where the files aren't copied correctly for non-Windows platforms -->
+    <Exec Command="rm -rf $(OutDir)bin/runtimes/* &amp;&amp; mkdir -p $(OutDir)bin/runtimes &amp;&amp; cp -R $(OutDir)runtimes/* $(OutDir)bin/runtimes/" />
+</Target>
+</Project>

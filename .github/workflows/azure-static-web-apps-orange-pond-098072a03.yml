@@ -9,7 +9,6 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
-
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
@@ -28,10 +27,23 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match you app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "challenges/challenge2/starter/vue-app" # App source code path
-          api_location: "challenges/challenge2/starter/api" # Api source code path - optional
+          app_location: "challenges/challenge3/starter/vue-app" # App source code path
+          api_location: "challenges/challenge3/starter/api" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+      - name: Build And Deploy Function App - Publish
+        id: builddeploy_func_publish
+        run: cd challenges/challenge3/starter/queueFunction && dotnet publish -c Release
+      - name: Build And Deploy Function App - Zip
+        id: builddeploy_func_zip
+        run: cd challenges/challenge3/starter/queueFunction/bin/Release/net5.0/publish && zip -r -D ../publish.zip .
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_COLDSTART_CHALLENGE_2021 }}
+      - name: Build And Deploy Function App - Deploy app via az cli
+        run: |
+          cd challenges/challenge3/starter/queueFunction/bin/Release/net5.0 && az functionapp deployment source config-zip -g sujithq-ColdStart-Challenge-2021 -n sujithq-coldstart-challenge-2021 --src publish.zip
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
