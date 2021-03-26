@@ -213,26 +213,26 @@ namespace Company.Function
         public DateTime LastUpdated { get; set; }
     }
 
-    public class Driver
+    public class BaseObject
     {
-        [JsonProperty("driverId")]
-        public string DriverId { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
     }
 
-    public class Icream
+    public class Driver : BaseObject
     {
-        [JsonProperty("icecreamId")] 
+        [JsonProperty("driverId")]
+        public string DriverId { get; set; }
+    }
+
+    public class Icream: BaseObject
+    {
+        [JsonProperty("icecreamId")]
         public int IcecreamId { get; set; }
-        [JsonProperty("name")]
-        public string Name { get; set; }
         [JsonProperty("description")]
         public string Description { get; set; }
-        [JsonProperty("imageUrl")]
-        public string ImageUrl { get; set; }
     }
 
     public class OrderDB
