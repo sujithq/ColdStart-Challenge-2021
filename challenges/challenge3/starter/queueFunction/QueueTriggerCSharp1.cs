@@ -70,7 +70,7 @@ namespace Company.Function
         }
 
         [Function("TimerTriggerCSharp")]
-        public static async Task RunTimer([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, FunctionContext context)
+        public static async Task RunTimer([TimerTrigger("%Schedule%")] TimerInfo myTimer, FunctionContext context)
         {
             var logger = context.GetLogger("TimerTriggerCSharp");
             if (myTimer.IsPastDue)
