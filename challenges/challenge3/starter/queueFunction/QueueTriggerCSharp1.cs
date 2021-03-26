@@ -26,9 +26,14 @@ namespace Company.Function
         [CosmosDBOutput(databaseName: "%CosmosDBdatabaseName%",
                     collectionName: "%CosmosDBcollectionName%",
                     ConnectionStringSetting = "CosmosDBConnection")]
-        public static OrderDB Run([QueueTrigger("%QueueName%", Connection = "sujithqcschallenge2021_STORAGE")] string myQueueItem,
+        public static string Run([QueueTrigger("%QueueName%", Connection = "sujithqcschallenge2021_STORAGE")] string myQueueItem,
                 FunctionContext context)
         {
+            DefaultContractResolver contractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            };
+
             var orderIn = JsonConvert.DeserializeObject<Order>(myQueueItem);
 
             // Get Icecream Info
@@ -45,28 +50,31 @@ namespace Company.Function
 
             var document = new OrderDB
             {
-                id = orderIn.Id,
-                user = orderIn.User,
-                date = orderIn.Date,
-                icecream = new Icream()
+                Id = orderIn.Id,
+                User = orderIn.User,
+                Date = orderIn.Date,
+                Icecream = new Icream()
                 {
-                    icecreamId = orderIn.IcecreamId,
-                    name = icecream.Name,
-                    description = icecream.Description,
-                    imageUrl = icecream.ImageUrl
+                    IcecreamId = orderIn.IcecreamId,
+                    Name = icecream.Name,
+                    Description = icecream.Description,
+                    ImageUrl = icecream.ImageUrl
                 },
-                status = "Accepted",
-                driver = new Driver()
+                Status = "Accepted",
+                Driver = new Driver()
                 {
-                    driverId = null,
-                    name = null,
-                    imageUrl = null
+                    DriverId = null,
+                    Name = null,
+                    ImageUrl = null
                 },
-                fullAddress = orderIn.FullAddress,
-                deliveryPosition = null,
-                lastPosition = null
+                FullAddress = orderIn.FullAddress,
+                DeliveryPosition = null,
+                LastPosition = null
             };
-            return document;
+            return JsonConvert.SerializeObject(document, new JsonSerializerSettings
+            {
+                ContractResolver = contractResolver
+            });
         }
 
         [Function("TimerTriggerCSharp")]
@@ -112,17 +120,17 @@ namespace Company.Function
 
                 foreach (var order in allAcceptedOrders)
                 {
-                    Console.WriteLine($"Order Status: {order.status}; Id: {order.id}; User: {order.user};");
-                    order.status = "Ready";
+                    Console.WriteLine($"Order Status: {order.Status}; Id: {order.Id}; User: {order.User};");
+                    order.Status = "Ready";
 
-                    order.deliveryPosition = await GetLocation(order.fullAddress);
+                    order.DeliveryPosition = await GetLocation(order.FullAddress);
 
                     ItemResponse<OrderDB> response = await container.ReplaceItemAsync(
-                        partitionKey: new PartitionKey(order.user),
-                        id: order.id,
+                        partitionKey: new PartitionKey(order.User),
+                        id: order.Id,
                         item: order);
 
-                    Console.WriteLine($"New Order Status: {order.status}; Id: {order.id}; User: {order.user};");
+                    Console.WriteLine($"New Order Status: {order.Status}; Id: {order.Id}; User: {order.User};");
 
                     if (response.Diagnostics != null)
                     {
@@ -207,30 +215,46 @@ namespace Company.Function
 
     public class Driver
     {
-        public string driverId { get; set; }
-        public string name { get; set; }
-        public string imageUrl { get; set; }
+        [JsonProperty("driverId")]
+        public string DriverId { get; set; }
+        [JsonProperty("name")]
+        public string Name { get; set; }
+        [JsonProperty("imageUrl")]
+        public string ImageUrl { get; set; }
     }
 
     public class Icream
     {
-        public int icecreamId { get; set; }
-        public string name { get; set; }
-        public string description { get; set; }
-        public string imageUrl { get; set; }
+        [JsonProperty("icecreamId")] 
+        public int IcecreamId { get; set; }
+        [JsonProperty("name")]
+        public string Name { get; set; }
+        [JsonProperty("description")]
+        public string Description { get; set; }
+        [JsonProperty("imageUrl")]
+        public string ImageUrl { get; set; }
     }
 
     public class OrderDB
     {
-        public string id { get; set; }
-        public string user { get; set; }
-        public DateTime date { get; set; }
-        public Icream icecream { get; set; }
-        public string status { get; set; }
-        public Driver driver { get; set; }
-        public string fullAddress { get; set; }
-        public Point deliveryPosition { get; set; }
-        public Point lastPosition { get; set; }
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        [JsonProperty("user")]
+        public string User { get; set; }
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+        [JsonProperty("icecream")]
+        public Icream Icecream { get; set; }
+        [JsonProperty("status")]
+        public string Status { get; set; }
+        [JsonProperty("driver")]
+        public Driver Driver { get; set; }
+        [JsonProperty("fullAddress")]
+        public string FullAddress { get; set; }
+        [JsonProperty("deliveryPosition")]
+        public Point DeliveryPosition { get; set; }
+        [JsonProperty("lastPosition")]
+        public Point LastPosition { get; set; }
 
     }
 
