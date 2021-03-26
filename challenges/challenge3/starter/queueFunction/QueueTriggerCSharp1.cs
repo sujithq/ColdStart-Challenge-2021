@@ -23,10 +23,10 @@ namespace Company.Function
         private static readonly JsonSerializer Serializer = new JsonSerializer();
 
         [Function("QueueTriggerCSharp1")]
-        [CosmosDBOutput(databaseName: "coldstartchallenge2021",
-                    collectionName: "orders",
+        [CosmosDBOutput(databaseName: "%CosmosDBdatabaseName%",
+                    collectionName: "%CosmosDBcollectionName%",
                     ConnectionStringSetting = "CosmosDBConnection")]
-        public static OrderDB Run([QueueTrigger("preorder", Connection = "sujithqcschallenge2021_STORAGE")] string myQueueItem,
+        public static OrderDB Run([QueueTrigger("%QueueName%", Connection = "sujithqcschallenge2021_STORAGE")] string myQueueItem,
                 FunctionContext context)
         {
             var orderIn = JsonConvert.DeserializeObject<Order>(myQueueItem);
