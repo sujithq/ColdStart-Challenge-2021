@@ -1,4 +1,4 @@
-const data = require('../shared/drivers-data');
+const data = require('../shared/driver-data');
 
 module.exports = async function (context) {
   try {
