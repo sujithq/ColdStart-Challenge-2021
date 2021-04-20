@@ -22,7 +22,7 @@ const data = {
  * @returns 
  */
 function getDriverById(driverId) {
-  return data.filter(function(driver) {
+  return data.drivers.filter(function(driver) {
     return driver.driverId == driverId;
   });
 }
@@ -33,7 +33,7 @@ function getDriverById(driverId) {
  * @returns 
  */
 function getDrivers() {
-  return data;
+  return data.drivers;
 }
 
 module.exports = { getDriverById, getDrivers };
