@@ -10,11 +10,14 @@ using Xamarin.Forms;
 using XE = Xamarin.Essentials;
 using ColdStartChallenge.DriverApp.Models;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace ColdStartChallenge.DriverApp.ViewModels
 {
     public class DashboardPageViewModel : ViewModelBase
     {
+        
+
         private readonly OrderService _orderService;
         private readonly LocationService _locationService;
 
@@ -109,7 +112,7 @@ namespace ColdStartChallenge.DriverApp.ViewModels
             }
         }
 
-        private SortOption _selectedSortOption = SortOption.Recency;
+        private SortOption _selectedSortOption = SortOption.Distance;
         public SortOption SelectedSortOption
         {
             get => _selectedSortOption;
@@ -324,5 +327,9 @@ namespace ColdStartChallenge.DriverApp.ViewModels
             SelectedSortOption = arg;
             await OnLoadItems();
         }
+
+        
     }
+
+    
 }
