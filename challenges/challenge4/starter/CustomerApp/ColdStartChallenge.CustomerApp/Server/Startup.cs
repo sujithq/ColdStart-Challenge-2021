@@ -22,11 +22,16 @@ namespace ColdStartChallenge.CustomerApp.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR().AddAzureSignalR(options =>
-            {
-                options.ServerStickyMode =
-                    Microsoft.Azure.SignalR.ServerStickyMode.Required;
-            });
+            services.AddServerSideBlazor();
+            services.AddSignalR()
+                
+            //    .AddAzureSignalR(options =>
+            //{
+            //    options.ServerStickyMode =
+            //        Microsoft.Azure.SignalR.ServerStickyMode.Required;
+            //    options.ConnectionString = Configuration["Azure:SignalR:ConnectionString"];
+            //})
+                ;
 
             // services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             // {
