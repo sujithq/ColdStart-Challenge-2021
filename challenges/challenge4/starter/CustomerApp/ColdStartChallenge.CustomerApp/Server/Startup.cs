@@ -24,13 +24,14 @@ namespace ColdStartChallenge.CustomerApp.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSignalR().AddAzureSignalR();
-            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
-            {
-                builder.AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
-            }));
+
+            // services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            // {
+            //     builder.AllowAnyOrigin()
+            //     .AllowAnyMethod()
+            //     .AllowAnyHeader()
+            //     .AllowCredentials();
+            // }));
 
             services.AddControllersWithViews();
             services.AddRazorPages();

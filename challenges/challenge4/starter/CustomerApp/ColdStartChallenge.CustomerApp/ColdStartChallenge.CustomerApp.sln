@@ -8,6 +8,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColdStartChallenge.Customer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColdStartChallenge.CustomerApp.Shared", "Shared\ColdStartChallenge.CustomerApp.Shared.csproj", "{C35B52CD-26E6-4880-BE34-99B45EB0FE5A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Api\Api.csproj", "{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,18 @@ Global
 		{C35B52CD-26E6-4880-BE34-99B45EB0FE5A}.Release|x64.Build.0 = Release|Any CPU
 		{C35B52CD-26E6-4880-BE34-99B45EB0FE5A}.Release|x86.ActiveCfg = Release|Any CPU
 		{C35B52CD-26E6-4880-BE34-99B45EB0FE5A}.Release|x86.Build.0 = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|x64.Build.0 = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Debug|x86.Build.0 = Debug|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|x64.ActiveCfg = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|x64.Build.0 = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|x86.ActiveCfg = Release|Any CPU
+		{9617C4A8-736C-48F8-B77F-A5B1BDEABB11}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
