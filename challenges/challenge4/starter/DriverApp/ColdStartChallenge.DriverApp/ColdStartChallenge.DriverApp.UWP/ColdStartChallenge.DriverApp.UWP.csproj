@@ -171,6 +171,9 @@
     <PackageReference Include="Acr.UserDialogs">
       <Version>7.1.0.481</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Azure.Cosmos">
+      <Version>3.17.1</Version>
+    </PackageReference>
     <PackageReference Include="Xamarin.CommunityToolkit">
       <Version>1.0.3</Version>
     </PackageReference>

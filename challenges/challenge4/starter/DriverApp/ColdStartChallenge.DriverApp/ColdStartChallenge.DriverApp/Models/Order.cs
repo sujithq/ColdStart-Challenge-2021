@@ -2,6 +2,8 @@
 using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
+using Point = Microsoft.Azure.Cosmos.Spatial.Point;
+
 
 namespace ColdStartChallenge.DriverApp.Models
 {
@@ -52,36 +54,40 @@ namespace ColdStartChallenge.DriverApp.Models
         public string FullAddress { get; set; }
 
         [JsonProperty("deliveryPosition")]
-        private string DeliveryPosition { get; set; }
+        private Point DeliveryPosition { get; set; }
 
         [JsonIgnore]
         public Location Location
         {
             get
             {
-                string[] coordinates = DeliveryPosition?.Split(',');
-                return coordinates.Any() ? new Location() { Latitude = double.Parse(coordinates[0]), Longitude = double.Parse(coordinates[1]) } : null;
+                return DeliveryPosition != null ? new Location() { Latitude = DeliveryPosition.Position.Latitude, Longitude = DeliveryPosition.Position.Longitude } : null;
             }
         }
 
         [JsonProperty("lastPosition")]
-        private string LastPosition { get; set; }
+        private Point LastPosition { get; set; }
 
         [JsonIgnore]
         public Location DriverLocation
         {
             get
             {
-                string[] coordinates = LastPosition?.Split(',');
-                return coordinates.Any() ? new Location() { Latitude = double.Parse(coordinates[0]), Longitude = double.Parse(coordinates[1]) } : null;
+                return LastPosition != null ? new Location() { Latitude = LastPosition.Position.Latitude, Longitude = LastPosition.Position.Longitude } : null;
             }
             set
             {
                 if (value != null)
-                    LastPosition = string.Concat(value.Latitude.ToString(CultureInfo.InvariantCulture), ",", value.Longitude.ToString(CultureInfo.InvariantCulture));
+                    LastPosition = new Point(value.Longitude, value.Latitude);
                 else
                     LastPosition = null;
             }
+        }
+
+        [JsonIgnore]
+        public string Name
+        {
+            get => Id.ToString();
         }
     }
 
