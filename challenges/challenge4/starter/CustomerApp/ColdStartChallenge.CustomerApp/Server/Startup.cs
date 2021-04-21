@@ -23,7 +23,14 @@ namespace ColdStartChallenge.CustomerApp.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-          services.AddSignalR().AddAzureSignalR();
+            services.AddSignalR().AddAzureSignalR();
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            {
+                builder.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+            }));
 
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -49,7 +56,7 @@ namespace ColdStartChallenge.CustomerApp.Server
                 app.UseHsts();
             }
 
-  app.UseResponseCompression();
+            app.UseResponseCompression();
             app.UseHttpsRedirection();
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
