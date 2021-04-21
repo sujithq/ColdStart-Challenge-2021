@@ -1,12 +1,11 @@
+using BlazorChat.Server.Hubs;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
-using BlazorWebAssemblySignalRApp.Server.Hubs;
 
 namespace ColdStartChallenge.CustomerApp.Server
 {
@@ -68,7 +67,7 @@ namespace ColdStartChallenge.CustomerApp.Server
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                endpoints.MapHub<ChatHub>("/chathub");
+                endpoints.MapHub<BlazorChatSampleHub>(BlazorChatSampleHub.HubUrl);
                 endpoints.MapFallbackToFile("index.html");
             });
         }
