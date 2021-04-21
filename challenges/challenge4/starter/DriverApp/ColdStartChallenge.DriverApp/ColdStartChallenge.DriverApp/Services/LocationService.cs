@@ -19,7 +19,6 @@ namespace ColdStartChallenge.DriverApp.Services
                 var status = await CheckAndRequestLocationPermission();
                 if (status == PermissionStatus.Granted)
                 {
-                    // *** GET THE CURRENT LOCATION ***
                     var request = new GeolocationRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(10));
                     _cts = new CancellationTokenSource();
                     var location = await Geolocation.GetLocationAsync(request, _cts.Token);
@@ -51,8 +50,6 @@ namespace ColdStartChallenge.DriverApp.Services
         {
             try
             {
-                // *** GECODE THE CURRENT LOCATION **
-
                 var location = await GetLocation();
                 var place = await Geocoding.GetPlacemarksAsync(location.Latitude, location.Longitude);
                 (Location currentLocation, Placemark place)? x = (location, place?.FirstOrDefault());

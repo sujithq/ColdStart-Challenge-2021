@@ -20,9 +20,6 @@ namespace ColdStartChallenge.DriverApp.ViewModels
         private Order _order;
         private bool _isStatusVisible;
 
-
-        // *** ADD THE NEEDED PROPERTIES AND COMMAND FOR MVVM BINDING ***
-
         public Order Order
         {
             get => _order;
@@ -87,8 +84,6 @@ namespace ColdStartChallenge.DriverApp.ViewModels
 
         private async Task LoadOrder(Guid orderId, OrderStatus orderStatus)
         {
-
-            // *** GET THE ORDER DETAILS **
             Order = await _orderService.GetOrder(orderId, orderStatus);
             if (Order != null)
             {
@@ -99,7 +94,6 @@ namespace ColdStartChallenge.DriverApp.ViewModels
 
         private async Task OnSave()
         {
-            // *** SAVE THE CURRENT ORDER WITH IT'S NEW STATE
             // Set Driver Info
             Order.Driver = AppData.Instance.User;
             // Set Status to Delivering
