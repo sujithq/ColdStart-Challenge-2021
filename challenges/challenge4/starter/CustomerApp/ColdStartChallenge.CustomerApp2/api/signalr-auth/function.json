@@ -18,7 +18,8 @@
           "name": "connectionInfo",
           "userId": "{headers.x-ms-client-principal-name}",
           "hubName": "chat",
-          "direction": "in"
+          "direction": "in",
+          "connectionStringSetting": "AzureSignalRConnectionString"
       }
   ]
 }
