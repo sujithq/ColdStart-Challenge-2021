@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <UserSecretsId>67af25f4-7048-4182-8e2e-63568c469511</UserSecretsId>
+    <UserSecretsId>ce7ae3b0-0abc-4583-8702-84583057884e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Client\ColdStartChallenge.CustomerApp.Client.csproj" />
-    <ProjectReference Include="..\Shared\ColdStartChallenge.CustomerApp.Shared.csproj" />
+    <ProjectReference Include="..\Client\BlazorApp.Client.csproj" />
+    <ProjectReference Include="..\Shared\BlazorApp.Shared.csproj" />
   </ItemGroup>
 
 

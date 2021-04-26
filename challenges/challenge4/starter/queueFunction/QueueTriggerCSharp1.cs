@@ -164,7 +164,7 @@ namespace Company.Function
             {
                 var result = response.ResourceSets[0].Resources[0] as BingMapsRESTToolkit.Location;
 
-                return new Point(result.Point.Coordinates[0], result.Point.Coordinates[1]);
+                return new Point(result.Point.Coordinates[1], result.Point.Coordinates[0]);
             }
 
             return new Point(NextDoubleLinear(-180, 180), NextDoubleLinear(-180, 180));

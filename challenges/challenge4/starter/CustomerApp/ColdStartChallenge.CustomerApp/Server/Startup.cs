@@ -1,13 +1,15 @@
-using BlazorChat.Server.Hubs;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using BlazorApp.Server.Hubs;
 
-namespace ColdStartChallenge.CustomerApp.Server
+namespace BlazorApp.Server
 {
     public class Startup
     {
@@ -22,37 +24,21 @@ namespace ColdStartChallenge.CustomerApp.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddServerSideBlazor();
-            services.AddSignalR()
-                
-            //    .AddAzureSignalR(options =>
-            //{
-            //    options.ServerStickyMode =
-            //        Microsoft.Azure.SignalR.ServerStickyMode.Required;
-            //    options.ConnectionString = Configuration["Azure:SignalR:ConnectionString"];
-            //})
-                ;
-
-            // services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
-            // {
-            //     builder.AllowAnyOrigin()
-            //     .AllowAnyMethod()
-            //     .AllowAnyHeader()
-            //     .AllowCredentials();
-            // }));
-
+            // services.AddSignalR().AddAzureSignalR("Endpoint=https://sujithq-coldstart-challenge-2021.service.signalr.net;AccessKey=vZ3MdtC9GALx4dfRuPhenpxX+Uk2XxWy/IZzzCYl+wM=;Version=1.0;");
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddResponseCompression(opts =>
-    {
-        opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-            new[] { "application/octet-stream" });
-    });
+            // services.AddResponseCompression(opts =>
+            // {
+            //     opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+            //         new[] { "application/octet-stream" });
+            // });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseResponseCompression();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -65,7 +51,6 @@ namespace ColdStartChallenge.CustomerApp.Server
                 app.UseHsts();
             }
 
-            app.UseResponseCompression();
             app.UseHttpsRedirection();
             app.UseBlazorFrameworkFiles();
             app.UseStaticFiles();
@@ -76,7 +61,7 @@ namespace ColdStartChallenge.CustomerApp.Server
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                endpoints.MapHub<BlazorChatSampleHub>(BlazorChatSampleHub.HubUrl);
+                // endpoints.MapHub<ChatHub>("/chat");
                 endpoints.MapFallbackToFile("index.html");
             });
         }

@@ -1,0 +1,84 @@
+@page "/orders"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
+@using AzureStaticWebApps.Blazor.Authentication.Models
+@inject HttpClient Http
+@using BlazorApp.Client.Models
+
+@if (orders == null)
+{
+<p><em>Loading...</em></p> }
+            else
+            {
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>User</th>
+            <th>Full Address</th>
+            <th>Distance</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in orders)
+        {
+        <tr>
+            <td>@order.Id</td>
+            <td>@order.User</td>
+            <td>@order.FullAddress</td>
+            <td>@order.Distance</td>
+        </tr>}
+    </tbody>
+</table>
+
+
+
+@code {
+
+    private HubConnection hubConnection;
+
+    private Order[] orders = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/api"), options =>
+            {
+                options.HttpMessageHandlerFactory = innerHandler =>
+                    new IncludeRequestCredentialsMessageHandler { InnerHandler = innerHandler };
+            })
+            .Build();
+
+        hubConnection.On<string, string, double, double>("ReceiveOrderUpdate", (user, orderId, latitude, longitude) =>
+        {
+            var encodedMsg = $"{user}: {orderId}";
+
+            var order = orders.FirstOrDefault(f => f.User == user && f.Id == orderId);
+
+            if (order != null) {
+                order.LastPosition = new MyPoint(latitude, longitude);
+                StateHasChanged();
+            }
+
+        });
+
+        await hubConnection.StartAsync();
+
+        try
+        {
+            orders = await Http.GetFromJsonAsync<Order[]>("/api/MyOrders");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public bool IsConnected =>
+        hubConnection.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        await hubConnection.DisposeAsync();
+    } }}
