@@ -241,10 +241,10 @@ namespace ColdStartChallenge.DriverApp.ViewModels
         {
             _sendLocation = true;
 
-            Device.StartTimer(TimeSpan.FromSeconds(15), () =>
+            Device.StartTimer(TimeSpan.FromSeconds(15), () => 
             {
                 if (_sendLocation)
-                    GetCurrentLocation(true);
+                    _ = GetCurrentLocation(true);
 
                 //True = Repeat again, False = Stop the timer
                 return _sendLocation; 

@@ -91,4 +91,13 @@ namespace ColdStartChallenge.DriverApp.Models
         }
     }
 
+    public class OrderCtx
+    {
+        public string user { get; set; }
+        public string orderId { get; set; }
+
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+    }
+
 }
