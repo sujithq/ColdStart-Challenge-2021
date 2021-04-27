@@ -13,12 +13,19 @@ namespace ColdStartChallenge.DriverApp.Services
     public class OrderService
     {
         private readonly HttpClient _client;
+        private readonly HttpClient _clientSignal;
         private readonly LocationService _locationService;
 
         public OrderService()
         {
-            _client = new HttpClient();
-            _client.BaseAddress = new Uri(Constants.BASE_URI);
+            _client = new HttpClient
+            {
+                BaseAddress = new Uri(Constants.BASE_URI)
+            };
+            _clientSignal = new HttpClient
+            {
+                BaseAddress = new Uri(Constants.BASE_URI_SIGNALR)
+            };
             _locationService = new LocationService();
         }
 
@@ -51,9 +58,9 @@ namespace ColdStartChallenge.DriverApp.Services
 
         public async Task<Order> GetOrder(Guid id, OrderStatus orderStatus = OrderStatus.Ready)
         {
-            if (Barrel.Current.Exists(key: $"Orders{orderStatus.ToString()}"))
+            if (Barrel.Current.Exists(key: $"Orders{orderStatus}"))
             {
-                string json = Barrel.Current.Get<string>($"Orders{orderStatus.ToString()}");
+                string json = Barrel.Current.Get<string>($"Orders{orderStatus}");
                 var orders = JsonConvert.DeserializeObject<List<Order>>(json);
                 return orders.FirstOrDefault(i => i.Id == id);
             }
@@ -65,15 +72,21 @@ namespace ColdStartChallenge.DriverApp.Services
         {
             var orderAsJson = JsonConvert.SerializeObject(order);
             var content = new StringContent(orderAsJson, Encoding.UTF8, "application/json");
-
             var response = await _client.PutAsync($"orders/{order.Id}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var orderCtxAsJson = JsonConvert.SerializeObject(new OrderCtx { user = order.User, orderId = order.Id.ToString(), latitude = order.DriverLocation.Latitude, longitude = order.DriverLocation.Longitude });
+                content = new StringContent(orderCtxAsJson, Encoding.UTF8, "application/json");
+                response = await _clientSignal.PostAsync($"SendOrderUpdate", content);
+            }
         }
 
         private async Task<IEnumerable<Order>> GetOrders(OrderStatus orderStatus = OrderStatus.Ready)
         {
             try
             {
-                var response = await _client.GetAsync($"orders?status={orderStatus.ToString()}");
+                var response = await _client.GetAsync($"orders?status={orderStatus}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -81,7 +94,7 @@ namespace ColdStartChallenge.DriverApp.Services
                     var orders = JsonConvert.DeserializeObject<List<Order>>(json);
 
                     if (orders != null)
-                        Barrel.Current.Add<string>($"Orders{orderStatus.ToString()}", json, TimeSpan.FromMinutes(15));
+                        Barrel.Current.Add($"Orders{orderStatus}", json, TimeSpan.FromMinutes(15));
 
                     return orders;
                 }
@@ -95,9 +108,9 @@ namespace ColdStartChallenge.DriverApp.Services
             {
             }
 
-            if (Barrel.Current.Exists(key: $"Orders{orderStatus.ToString()}"))
+            if (Barrel.Current.Exists(key: $"Orders{orderStatus}"))
             {
-                string json = Barrel.Current.Get<string>($"Orders{orderStatus.ToString()}");
+                string json = Barrel.Current.Get<string>($"Orders{orderStatus}");
                 var orders = JsonConvert.DeserializeObject<List<Order>>(json);
                 return orders ?? new List<Order>();
             }

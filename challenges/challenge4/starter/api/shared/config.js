@@ -11,4 +11,12 @@ const config = {
   personalizer_base: process.env.personalizer_base 
 };
 
-module.exports = { config };
+const cosmosConfig = {
+  cosmosdb_endpoint: process.env.COSMOSDB_ENDPOINT,
+  cosmosdb_key: process.env.COSMOSDB_KEY,
+  cosmosdb_databaseId: "coldstartchallenge2021",
+  cosmosdb_ordersContainerId: "orders",
+  cosmosdb_ordersPartitionKey: "user",
+};
+
+module.exports = { config, cosmosConfig };
