@@ -1,114 +1,113 @@
 @page "/orders"
-@using Microsoft.AspNetCore.SignalR.Client
+
 @inject NavigationManager NavigationManager
-@implements IAsyncDisposable
-@using AzureStaticWebApps.Blazor.Authentication.Models
 @inject HttpClient Http
+
+@implements IAsyncDisposable
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using AzureStaticWebApps.Blazor.Authentication.Models
 @using BlazorApp.Client.Models
+@using Microsoft.AspNetCore.Components.Authorization
 
-@if (orders == null)
-{
-    <p><em>Loading...</em></p> }
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>User</th>
-                <th>Full Address</th>
-                <th>Distance</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in orders)
-            {
-                <tr>
-                    <td>@order.Id</td>
-                    <td>@order.User</td>
-                    <td>@order.FullAddress</td>
-                    <td>@order.Distance</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    @*<hr>
-
-    <ul id="messagesList">
-        @foreach (var message in messages)
+<AuthorizeView>
+    <Authorized>
+        @if (orders == null)
         {
-            <li>@message</li>
+            <p><em>Loading...</em></p>
         }
-    </ul>*@
-
-
-    @code {
-
-        private HubConnection hubConnection;
-
-        private Order[] orders = null;
-
-        //private List<string> messages = new List<string>();
-
-        protected override async Task OnInitializedAsync()
+        else
         {
-            hubConnection = new HubConnectionBuilder()
-                .WithUrl(NavigationManager.ToAbsoluteUri("/api"), options =>
-                {
-                    options.HttpMessageHandlerFactory = innerHandler =>
-                        new IncludeRequestCredentialsMessageHandler { InnerHandler = innerHandler };
-                })
-                .Build();
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order Id</th>
+                        <th>Delivery Address</th>
+                        <th>Driver's Distance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in orders)
+                    {
+                        <tr>
+                            <td>@order.Id</td>
+                            <td>@order.FullAddress</td>
+                            <td>@order.Distance</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <RadzenGoogleMap style="height: 400px" Zoom=@zoom Center=@(new GoogleMapPosition() { Lat = order.LastPosition.Latitude, Lng = order.LastPosition.Longitude })>
+                                    <Markers>
+                                        @foreach (var order in orders)
+                                        {
+                                            <RadzenGoogleMapMarker Title="@order.Icecream.Description" Label="@order.Icecream.Name" Position=@(new GoogleMapPosition() { Lat = order.DeliveryPosition.Latitude, Lng = order.DeliveryPosition.Longitude }) />
+                                            <RadzenGoogleMapMarker Title="@order.Distance.ToString()" Label="@order.Driver.Name" Position=@(new GoogleMapPosition() { Lat = order.LastPosition.Latitude, Lng = order.LastPosition.Longitude }) />
+                                        }
+                                    </Markers>
+                                </RadzenGoogleMap>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
 
-            hubConnection.On<string, string, string, string>("ReceiveOrderUpdate", (user, orderId, latitude, longitude) =>
-            {
-
-                //messages.Clear();
-
-                //messages.Add($"ReceiveOrderUpdate - Start ({user},{orderId},{latitude},{longitude})");
-                //var encodedMsg = $"{user}: {orderId}";
-
-                //messages.Add($"ReceiveOrderUpdate - Orders ({orders.Length})");
-
-                //foreach (var ord in orders)
-                //{
-                //    messages.Add($"ReceiveOrderUpdate - Order({ord.User}, {ord.Id})");
-                //}
-
-                var order = orders.FirstOrDefault(f => f.User == user && f.Id.ToUpperInvariant() == orderId.ToUpperInvariant());
-
-                if (order != null)
-                {
-                    //messages.Add($"ReceiveOrderUpdate - Previous Last Position ({order.LastPosition.Latitude},{order.LastPosition.Longitude})");
-                    order.LastPosition = new MyPoint(double.Parse(latitude), double.Parse(longitude));
-                    StateHasChanged();
-                }
-                //else
-                //{
-                //    messages.Add($"ReceiveOrderUpdate - No Order");
-                //}
-                //messages.Add("ReceiveOrderUpdate - End");
-                //StateHasChanged();
-
-            });
-
-            await hubConnection.StartAsync();
-
-            try
-            {
-                orders = await Http.GetFromJsonAsync<Order[]>("/api/MyOrders");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
         }
+    </Authorized>
+    <NotAuthorized>
+        <p><em>Log in to view your orders</em></p>
+    </NotAuthorized>
+</AuthorizeView>
 
-        public bool IsConnected =>
-            hubConnection.State == HubConnectionState.Connected;
 
-        public async ValueTask DisposeAsync()
+
+
+
+@code {
+
+    int zoom = 10;
+
+    private HubConnection hubConnection;
+
+    private Order[] orders = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/api"), options =>
+            {
+                options.HttpMessageHandlerFactory = innerHandler =>
+                    new IncludeRequestCredentialsMessageHandler { InnerHandler = innerHandler };
+            })
+            .Build();
+
+        hubConnection.On<string, string, string, string>("ReceiveOrderUpdate", (user, orderId, latitude, longitude) =>
         {
-            await hubConnection.DisposeAsync();
-        } }}
+            var order = orders.FirstOrDefault(f => f.User == user && f.Id.ToUpperInvariant() == orderId.ToUpperInvariant());
+
+            if (order != null)
+            {
+                order.LastPosition = new MyPoint(double.Parse(latitude), double.Parse(longitude));
+                StateHasChanged();
+            }
+        });
+
+        await hubConnection.StartAsync();
+
+        try
+        {
+            orders = await Http.GetFromJsonAsync<Order[]>("/api/MyOrders");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public bool IsConnected =>
+        hubConnection.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        await hubConnection.DisposeAsync();
+    }
+}
