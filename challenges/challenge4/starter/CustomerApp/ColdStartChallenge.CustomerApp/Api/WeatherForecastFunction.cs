@@ -1,21 +1,14 @@
-using System;
-using System.IO;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Azure.WebJobs.Extensions.SignalRService;
-using System.Threading.Tasks;
-
-using Newtonsoft.Json;
-using Microsoft.Azure.Cosmos;
-using System.Collections.Generic;
 using Microsoft.Azure.Cosmos.Spatial;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace BlazorApp.Api
@@ -42,11 +35,15 @@ namespace BlazorApp.Api
             return summary;
         }
 
-        [FunctionName("WeatherForecast")]
-        public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        [Function("WeatherForecast")]
+        public static HttpResponseData WeatherForecast(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
+            FunctionContext functionContext)
         {
+
+            var log = functionContext.GetLogger("WeatherForecast");
+            log.LogInformation("HttpTrigger - WeatherForecast");
+
             var randomNumber = new Random();
             var temp = 0;
 
@@ -57,107 +54,110 @@ namespace BlazorApp.Api
                 Summary = GetSummary(temp)
             }).ToArray();
 
-            return new OkObjectResult(result);
+            var response = req.CreateResponse(System.Net.HttpStatusCode.OK);
+            response.WriteAsJsonAsync(result);
+
+            return response;
         }
 
-        [FunctionName("negotiate")]
-        public static SignalRConnectionInfo GetSignalRInfo(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
-            [SignalRConnectionInfo(HubName = "chat")] SignalRConnectionInfo connectionInfo, ILogger log)
-        {
-            log.LogInformation($"negotiate - url: {connectionInfo.Url} - at: {connectionInfo.AccessToken}");
-            return connectionInfo;
-        }
+        //[FunctionName("negotiate")]
+        //public static SignalRConnectionInfo GetSignalRInfo(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
+        //    [SignalRConnectionInfo(HubName = "chat")] SignalRConnectionInfo connectionInfo, ILogger log)
+        //{
+        //    log.LogInformation($"negotiate - url: {connectionInfo.Url} - at: {connectionInfo.AccessToken}");
+        //    return connectionInfo;
+        //}
 
-        [FunctionName("SendMessage")]
-        public static async Task SendMessage(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
-            [SignalR(HubName = "chat")] IAsyncCollector<SignalRMessage> signalRMessages, ILogger log)
-        {
+        //[FunctionName("SendMessage")]
+        //public static async Task SendMessage(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
+        //    [SignalR(HubName = "chat")] IAsyncCollector<SignalRMessage> signalRMessages, ILogger log)
+        //{
 
-            string requestBody = string.Empty;
-            using (StreamReader streamReader =  new  StreamReader(req.Body))
-            {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
-            var data = JsonConvert.DeserializeObject<MessageCtx>(requestBody);
+        //    string requestBody = string.Empty;
+        //    using (StreamReader streamReader =  new  StreamReader(req.Body))
+        //    {
+        //        requestBody = await streamReader.ReadToEndAsync();
+        //    }
+        //    var data = JsonConvert.DeserializeObject<MessageCtx>(requestBody);
 
-            log.LogInformation($"SendMessage - User: {data.user} - Msg: {data.message}");
-            await signalRMessages.AddAsync(
-                new SignalRMessage
-                {
-                    Target = "ReceiveMessage",
-                    Arguments = new[] { data.user, data.message }
-                });
-        }
+        //    log.LogInformation($"SendMessage - User: {data.user} - Msg: {data.message}");
+        //    await signalRMessages.AddAsync(
+        //        new SignalRMessage
+        //        {
+        //            Target = "ReceiveMessage",
+        //            Arguments = new[] { data.user, data.message }
+        //        });
+        //}
 
-        [FunctionName("SendOrderUpdate")]
-        public static async Task SendOrderUpdate(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
-            [SignalR(HubName = "chat")] IAsyncCollector<SignalRMessage> signalRMessages, ILogger log)
-        {
+        //[FunctionName("SendOrderUpdate")]
+        //public static async Task SendOrderUpdate(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
+        //    [SignalR(HubName = "chat")] IAsyncCollector<SignalRMessage> signalRMessages, ILogger log)
+        //{
 
-            string requestBody = string.Empty;
-            using (StreamReader streamReader = new StreamReader(req.Body))
-            {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
-            var data = JsonConvert.DeserializeObject<OrderCtx>(requestBody);
+        //    string requestBody = string.Empty;
+        //    using (StreamReader streamReader = new StreamReader(req.Body))
+        //    {
+        //        requestBody = await streamReader.ReadToEndAsync();
+        //    }
+        //    var data = JsonConvert.DeserializeObject<OrderCtx>(requestBody);
 
-            log.LogInformation($"SendOrderUpdate - User: {data.user} - OrderId: {data.orderId} - Latitude: {data.latitude} - Longitude: {data.longitude}");
-            await signalRMessages.AddAsync(
-                new SignalRMessage
-                {
-                    Target = "ReceiveOrderUpdate",
-                    Arguments = new[] { data.user, data.orderId, data.latitude.ToString(), data.longitude.ToString() }
-                });
-        }
-
-
-
-        [FunctionName("MyOrders")]
-        public static async Task<List<Order>> GetMyOrders(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,ILogger log)
-        {
+        //    log.LogInformation($"SendOrderUpdate - User: {data.user} - OrderId: {data.orderId} - Latitude: {data.latitude} - Longitude: {data.longitude}");
+        //    await signalRMessages.AddAsync(
+        //        new SignalRMessage
+        //        {
+        //            Target = "ReceiveOrderUpdate",
+        //            Arguments = new[] { data.user, data.orderId, data.latitude.ToString(), data.longitude.ToString() }
+        //        });
+        //}
 
 
-            var user = StaticWebAppsAuth.Parse(req);
 
-            using CosmosClient cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDBep"), Environment.GetEnvironmentVariable("CosmosDBkey"));
-            Container container = cosmosClient.GetContainer(Environment.GetEnvironmentVariable("CosmosDBdatabaseName"), Environment.GetEnvironmentVariable("CosmosDBcollectionName"));
+        //[FunctionName("MyOrders")]
+        //public static async Task<List<Order>> GetMyOrders(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,ILogger log)
+        //{
 
-            QueryDefinition query = new QueryDefinition(
-                            "select * from orders s where s.status = @StatusInput and s.user = @UserInput")
-                            .WithParameter("@StatusInput", "Delivering")
-                            .WithParameter("@UserInput", user.FindFirstValue(ClaimTypes.Name));
 
-            List<Order> allAcceptedOrders = new List<Order>();
+        //    var user = StaticWebAppsAuth.Parse(req);
 
-            using (FeedIterator<OrderDB> resultSet = container.GetItemQueryIterator<OrderDB>(
-                query,
-                requestOptions: new QueryRequestOptions()
-                {
-                    MaxItemCount = 1
-                }))
-            {
-                while (resultSet.HasMoreResults)
-                {
-                    FeedResponse<OrderDB> response = await resultSet.ReadNextAsync();
-                    if (response.Any())
-                    {
-                        OrderDB order = response.First();
-                        allAcceptedOrders.Add(new Order(order));
-                    }
-                    if (response.Diagnostics != null)
-                    {
-                        Console.WriteLine($" Diagnostics {response.Diagnostics.ToString()}");
-                    }
-                }
-            }
+        //    using CosmosClient cosmosClient = new CosmosClient(Environment.GetEnvironmentVariable("CosmosDBep"), Environment.GetEnvironmentVariable("CosmosDBkey"));
+        //    Container container = cosmosClient.GetContainer(Environment.GetEnvironmentVariable("CosmosDBdatabaseName"), Environment.GetEnvironmentVariable("CosmosDBcollectionName"));
 
-            return allAcceptedOrders;
+        //    QueryDefinition query = new QueryDefinition(
+        //                    "select * from orders s where s.status = @StatusInput and s.user = @UserInput")
+        //                    .WithParameter("@StatusInput", "Delivering")
+        //                    .WithParameter("@UserInput", user.FindFirstValue(ClaimTypes.Name));
 
-        }
+        //    List<Order> allAcceptedOrders = new List<Order>();
+
+        //    using (FeedIterator<OrderDB> resultSet = container.GetItemQueryIterator<OrderDB>(
+        //        query,
+        //        requestOptions: new QueryRequestOptions()
+        //        {
+        //            MaxItemCount = 1
+        //        }))
+        //    {
+        //        while (resultSet.HasMoreResults)
+        //        {
+        //            FeedResponse<OrderDB> response = await resultSet.ReadNextAsync();
+        //            if (response.Any())
+        //            {
+        //                OrderDB order = response.First();
+        //                allAcceptedOrders.Add(new Order(order));
+        //            }
+        //            if (response.Diagnostics != null)
+        //            {
+        //                Console.WriteLine($" Diagnostics {response.Diagnostics.ToString()}");
+        //            }
+        //        }
+        //    }
+
+        //    return allAcceptedOrders;
+
+        //}
 
 
     }
@@ -284,13 +284,13 @@ namespace BlazorApp.Api
             public IEnumerable<string> UserRoles { get; set; }
         }
 
-        public static ClaimsPrincipal Parse(HttpRequest req)
+        public static ClaimsPrincipal Parse(HttpRequestData req)
         {
             var principal = new ClientPrincipal();
 
-            if (req.Headers.TryGetValue("x-ms-client-principal", out var header))
+            if (req.Headers.TryGetValues("x-ms-client-principal", out var headers))
             {
-                var data = header[0];
+                var data = headers.First();
                 var decoded = Convert.FromBase64String(data);
                 var json = Encoding.ASCII.GetString(decoded);
                 principal = JsonSerializer.Deserialize<ClientPrincipal>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
